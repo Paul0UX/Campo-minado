@@ -21,15 +21,34 @@ public class JogadorAgent {
     private final int SLEEP_MS = 300;   // pausa entre jogadas (ms)
     private final int PRINT_EVERY = 5;  // imprime a cada N jogadas (se nao for mina)
 
+    // flag para garantir que o agente jogue apenas uma vez
+    private volatile boolean played = false;
+
     @OnStart
     void onStart(IInternalAccess me) {
+        // repetidamente verifica se o arquivo existe, mas sai se ja jogou
         me.repeatStep(0, 1000, dummy -> {
+            if (played) {
+                return IFuture.DONE; // ja jogou, nao faz nada
+            }
+
             Path p = Paths.get("campo.csv");
             if (Files.exists(p)) {
                 try {
                     int[][] campo = lerCampoCSV(p);
                     System.out.println("[JogadorAgent] Campo carregado. Comecando a jogar (saidas reduzidas)...");
                     jogarCampo(campo);
+
+                    // marcar como executado para nao reiniciar
+                    played = true;
+
+                    // opcional: deletar o arquivo para evitar re-execucao acidental
+                    try {
+                        Files.deleteIfExists(p);
+                    } catch (IOException ex) {
+                        System.err.println("[JogadorAgent] Aviso: nao foi possivel deletar campo.csv: " + ex.getMessage());
+                    }
+
                 } catch (IOException e) {
                     System.err.println("[JogadorAgent] Erro ao ler campo: " + e.getMessage());
                 }
