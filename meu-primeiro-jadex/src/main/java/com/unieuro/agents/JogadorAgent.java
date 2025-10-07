@@ -1,120 +1,165 @@
 package com.unieuro.agents;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
-import jadex.bridge.IInternalAccess;
-import jadex.bridge.service.annotation.OnStart;
-import jadex.commons.future.IFuture;
 import jadex.micro.annotation.Agent;
+import jadex.micro.annotation.AgentBody;
+import jadex.micro.annotation.Description;
+
+import java.io.*;
+import java.util.*;
 
 @Agent
+@Description("Agente que joga o Campo Minado automaticamente.")
 public class JogadorAgent {
 
-    // controle de velocidade e verbosidade
-    private final int SLEEP_MS = 300;   // pausa entre jogadas (ms)
-    private final int PRINT_EVERY = 5;  // imprime a cada N jogadas (se nao for mina)
+    private int[][] campo;          // 0 = vazio, 1 = mina
+    private int[][] adjacencias;    // -1 = mina, 0–8 = minas ao redor
+    private boolean[][] revelado;
+    private int tamanho = 9;
+    private Random random = new Random();
 
-    // flag para garantir que o agente jogue apenas uma vez
-    private volatile boolean played = false;
+    @AgentBody
+    public void execute() {
+        carregarCampo();
+        carregarAdjacencias();
+        jogar();
+    }
 
-    @OnStart
-    void onStart(IInternalAccess me) {
-        // repetidamente verifica se o arquivo existe, mas sai se ja jogou
-        me.repeatStep(0, 1000, dummy -> {
-            if (played) {
-                return IFuture.DONE; // ja jogou, nao faz nada
+    private void carregarCampo() {
+        try (BufferedReader br = new BufferedReader(new FileReader("campo.csv"))) {
+            List<int[]> linhas = new ArrayList<>();
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                linha = linha.trim();
+                if (linha.isEmpty()) continue;
+                String[] partes = linha.split("\\s*,\\s*");
+                int[] nums = new int[partes.length];
+                for (int i = 0; i < partes.length; i++) {
+                    nums[i] = Integer.parseInt(partes[i]);
+                }
+                linhas.add(nums);
+            }
+            campo = linhas.toArray(new int[0][]);
+            tamanho = campo.length;
+            revelado = new boolean[tamanho][tamanho];
+            System.out.println("[JogadorAgent] Campo carregado. Começando a jogar...\n");
+        } catch (IOException e) {
+            System.err.println("Erro ao carregar campo: " + e.getMessage());
+        }
+    }
+
+    private void carregarAdjacencias() {
+        try (BufferedReader br = new BufferedReader(new FileReader("adjacencias.csv"))) {
+            List<int[]> linhas = new ArrayList<>();
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                linha = linha.trim();
+                if (linha.isEmpty()) continue;
+                String[] partes = linha.split("\\s*,\\s*");
+                int[] nums = new int[partes.length];
+                for (int i = 0; i < partes.length; i++) {
+                    nums[i] = Integer.parseInt(partes[i]);
+                }
+                linhas.add(nums);
+            }
+            adjacencias = linhas.toArray(new int[0][]);
+        } catch (IOException e) {
+            System.err.println("Erro ao carregar adjacencias: " + e.getMessage());
+        }
+    }
+
+    private void jogar() {
+        int jogada = 1;
+
+        while (true) {
+            int x = random.nextInt(tamanho);
+            int y = random.nextInt(tamanho);
+
+            if (revelado[x][y])
+                continue;
+
+            boolean bomba = campo[x][y] == 1;
+            int minasAoRedor = adjacencias[x][y];
+            revelado[x][y] = true;
+
+            // Mostra coordenadas em formato humano (1-based)
+            System.out.printf("[JogadorAgent] Jogada %d: (%d,%d) => %s (%d minas ao redor)%n",
+                    jogada, x + 1, y + 1,
+                    bomba ? "BOMBA" : "seguro", minasAoRedor);
+
+            if (bomba) {
+                imprimirCampo();
+                System.out.println("\n💥 BOOM! Fim de jogo!");
+                break;
             }
 
-            Path p = Paths.get("campo.csv");
-            if (Files.exists(p)) {
-                try {
-                    int[][] campo = lerCampoCSV(p);
-                    System.out.println("[JogadorAgent] Campo carregado. Comecando a jogar (saidas reduzidas)...");
-                    jogarCampo(campo);
+            // Se a célula for 0, revela automaticamente as vizinhas (usando BFS para evitar recursão profunda)
+            if (minasAoRedor == 0) {
+                revelarVizinhosBFS(x, y);
+            }
 
-                    // marcar como executado para nao reiniciar
-                    played = true;
+            imprimirCampo();
 
-                    // opcional: deletar o arquivo para evitar re-execucao acidental
-                    try {
-                        Files.deleteIfExists(p);
-                    } catch (IOException ex) {
-                        System.err.println("[JogadorAgent] Aviso: nao foi possivel deletar campo.csv: " + ex.getMessage());
+            jogada++;
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    /** Revela recursivamente as casas vizinhas de uma célula vazia (0 minas ao redor). */
+    // Versão iterativa (BFS) para maior robustez em campos grandes
+    private void revelarVizinhosBFS(int startX, int startY) {
+        Queue<int[]> queue = new LinkedList<>();
+        // Garantir que a célula inicial esteja marcada
+        if (!revelado[startX][startY]) {
+            revelado[startX][startY] = true;
+        }
+        queue.add(new int[]{startX, startY});
+
+        while (!queue.isEmpty()) {
+            int[] cur = queue.poll();
+            int x = cur[0];
+            int y = cur[1];
+
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    if (dx == 0 && dy == 0) continue;
+                    int nx = x + dx;
+                    int ny = y + dy;
+                    if (nx >= 0 && ny >= 0 && nx < tamanho && ny < tamanho && !revelado[nx][ny]) {
+                        revelado[nx][ny] = true; // marca como revelada
+                        if (adjacencias[nx][ny] == 0) {
+                            // se também for zero, empilha para expandir suas vizinhas
+                            queue.add(new int[]{nx, ny});
+                        }
                     }
-
-                } catch (IOException e) {
-                    System.err.println("[JogadorAgent] Erro ao ler campo: " + e.getMessage());
                 }
             }
-            return IFuture.DONE;
-        });
-    }
-
-    private int[][] lerCampoCSV(Path p) throws IOException {
-        List<String> linhas = Files.readAllLines(p, StandardCharsets.UTF_8);
-        int r = linhas.size();
-        int c = linhas.get(0).split(",").length;
-        int[][] campo = new int[r][c];
-        for (int i = 0; i < r; i++) {
-            String[] parts = linhas.get(i).trim().split(",");
-            for (int j = 0; j < c; j++) {
-                campo[i][j] = Integer.parseInt(parts[j]);
-            }
         }
-        return campo;
     }
 
-    private void jogarCampo(int[][] campo) {
-        int r = campo.length;
-        int c = campo[0].length;
-        List<int[]> possiveis = new ArrayList<>();
-        for (int i = 0; i < r; i++) for (int j = 0; j < c; j++) possiveis.add(new int[]{i, j});
-
-        Random rnd = new Random();
-        int jogadas = 0;
-        int minasEncontradas = 0;
-
-        while (!possiveis.isEmpty()) {
-            int idx = rnd.nextInt(possiveis.size());
-            int[] pos = possiveis.remove(idx);
-            int x = pos[0], y = pos[1];
-            jogadas++;
-
-            if (campo[x][y] == 1) {
-                minasEncontradas++;
-                System.out.printf("[JogadorAgent] Jogada %d: (%d,%d) => MINA! Total minas encontradas: %d%n",
-                                  jogadas, x, y, minasEncontradas);
-            } else {
-                if (jogadas % PRINT_EVERY == 0) {
-                    int vizinhas = contarMinasVizinhas(campo, x, y);
-                    System.out.printf("[JogadorAgent] Jogada %d: (%d,%d) => seguro (%d minas ao redor)%n",
-                                      jogadas, x, y, vizinhas);
+    /** Imprime o campo, mostrando números e espaços como no jogo real. */
+    private void imprimirCampo() {
+        System.out.println("\n===== CAMPO MINADO =====");
+        for (int i = 0; i < tamanho; i++) {
+            for (int j = 0; j < tamanho; j++) {
+                if (revelado[i][j]) {
+                    int val = adjacencias[i][j];
+                    if (val == -1) {
+                        System.out.print(" * "); // mina
+                    } else if (val == 0) {
+                        System.out.print("   "); // vazio
+                    } else {
+                        System.out.print(" " + val + " "); // número de minas
+                    }
+                } else {
+                    System.out.print(" ? ");
                 }
             }
-
-            try { Thread.sleep(SLEEP_MS); } catch (InterruptedException ignored) {}
+            System.out.println();
         }
-
-        System.out.println("[JogadorAgent] Fim das jogadas. Jogadas totais: " + jogadas +
-                           ", Minas encontradas: " + minasEncontradas);
-    }
-
-    private int contarMinasVizinhas(int[][] campo, int x, int y) {
-        int r = campo.length, c = campo[0].length;
-        int count = 0;
-        for (int i = Math.max(0, x - 1); i <= Math.min(r - 1, x + 1); i++) {
-            for (int j = Math.max(0, y - 1); j <= Math.min(c - 1, y + 1); j++) {
-                if (i == x && j == y) continue;
-                if (campo[i][j] == 1) count++;
-            }
-        }
-        return count;
+        System.out.println("========================");
     }
 }
