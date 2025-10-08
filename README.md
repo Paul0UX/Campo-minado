@@ -88,9 +88,6 @@ Antes de executar o projeto é necessário seguir e cumprir uma série de requis
    Para finalizar e fazer o projeto para de rodar é bem simples, basta apertar " ctrl + c " dentro do terminal (isso faz o sistema para de rodar e te mantém dentro do terminal do projeto)
 
 
-   # Conclusão
-**************************************
-
 
 # Conclusão
 **************************************
