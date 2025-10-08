@@ -2,6 +2,9 @@ package com.unieuro.agents;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Random;
 
 import jadex.micro.annotation.Agent;
@@ -19,11 +22,30 @@ public class CampoAgent {
 
     @AgentBody
     public void execute() {
-        gerarCampo();
-        calcularAdjacencias();
+        // Gera campos até existir ao menos uma célula com adjacencia == 0 (garante primeira jogada em cascata)
+        do {
+            gerarCampo();
+            calcularAdjacencias();
+        } while (!temZero());
         salvarCampo();
         salvarAdjacencias();
+        // inicializa arquivo de minas encontradas com 0 para UI
+        inicializarArquivoMinasEncontradas();
         System.out.println("[CampoAgent] Campo gerado e salvo em campo.csv e adjacencias.csv");
+    }
+
+    /** Retorna true quando existe ao menos uma célula segura com adjacencia 0. */
+    private boolean temZero() {
+        for (int i = 0; i < tamanho; i++) {
+            for (int j = 0; j < tamanho; j++) {
+                if (campo[i][j] == 0) {
+                    // precisa de adjacencias já calculadas para checar; se adjacencias for null ainda, assume false
+                    if (adjacencias == null) return false;
+                    if (adjacencias[i][j] == 0) return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void gerarCampo() {
@@ -87,6 +109,15 @@ public class CampoAgent {
             }
         } catch (IOException e) {
             System.err.println("Erro ao salvar adjacencias: " + e.getMessage());
+        }
+    }
+
+    private void inicializarArquivoMinasEncontradas() {
+        try {
+            Path p = Paths.get("minas_encontradas.txt");
+            Files.writeString(p, "00");
+        } catch (IOException e) {
+            System.err.println("[CampoAgent] Erro ao inicializar minas_encontradas.txt: " + e.getMessage());
         }
     }
 }
