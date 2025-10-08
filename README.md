@@ -29,7 +29,67 @@ Vitória: Você ganha o jogo quando todos os quadrados que não contêm minas s�
 
 # Instruções
 *********************************
+Antes de executar o projeto é necessário seguir e cumprir uma série de requisitos para que tudo funcione da maneira adequada.
 
+1. -> Instalar sua IDE
+   O primeiro passo é baixar e fazer a instalação da IDE, recomenda-se o uso do VsCode, você pode instalar pelo link:
+   https://code.visualstudio.com/download
+
+2. -> Instalar ferramentas:
+   Algumas ferramentas precisam ser instaladas para rodar o projeto, são elas:
+   - Java Development Kit (JDK)
+      Versão recomendada: JDK 17 ou superior.
+      Faça o download em: https://www.oracle.com/java/technologies/javase-downloads.html
+      Após a instalação, verifique se o Java foi configurado corretamente rodando o seguinte comando no terminal do seu projeto:
+     " java -version "
+     O terminal deve exibir algo como: " java version "17.0.x" "
+
+   - Maven (Ferramenta responsável por gerenciar dependências e compilar o projeto)
+     Faça o download em: https://maven.apache.org/download.cgi
+     Após instalar confira se tudo esta correto com o código:
+     " mvn -v "
+
+3. Baixe o repositório ou clone ele via GIT.
+   Abra um CMD, entre no local onde você quer clonar o repositório, com seguinte comando:
+   " cd local/onde/quero/criar "
+   e rode o seguinte comando:
+   " git clone https://github.com/Paul0UX/Campo-minado.git "
+   ou extraia o arquivo .zip do projeto em uma pasta da sua escolha.
+
+4. Entrando no projeto:
+   Abra a pasta que foi baixada ou clonada na sua IDE, abra um terminal e envie o seguinte comando:
+   " cd meu-primeiro-jadex " para entrar dentro da pasta "meu-primeiro-jadex"
+
+5. Compilar o projeto:
+   Ja dentro da pasta, vamos compilar o projeto.
+   Ainda no mesmo bash rode:
+   " mvn clean "
+   e depois
+   " mvn -q compile "
+   Isso vai baixar as dependências e compilar o projeto
+
+7. Executar o sistema:
+   para executar o sistema rode o seguinte comando:
+   " mvn exec:java "
+
+8. Funcionamento geral:
+   Ao iniciar, os agentes Jadex serão carregados automaticamente:
+   - CampoAgent — responsável por criar o campo minado e gerar a matriz.
+   - JogadorAgent — responsável por jogar o campo minado (revelar e marcar células).
+   - TempoAgent — controla o tempo total de execução.
+   - HelloAgent — agente auxiliar de inicialização.
+     
+     Durante a execução:
+       O campo minado é salvo em arquivos (campo.csv, minas_encontradas.txt, etc.)
+       A interface (CampoMinadoUI) exibe o progresso do jogo e o tempo em tempo real.
+       O resultado final (tempo e número de minas corretas) é salvo automaticamente.
+
+9. Finalização
+   Para finalizar e fazer o projeto para de rodar é bem simples, basta apertar " ctrl + c " dentro do terminal (isso faz o sistema para de rodar e te mantém dentro do terminal do projeto)
+
+
+   # Conclusão
+**************************************
 
 
 # Conclusão
