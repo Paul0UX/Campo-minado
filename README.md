@@ -1,7 +1,9 @@
 # Projeto-Campo Minado com multi-agentes utilizando Jadex
 
-# Linguagens / Bibliotecas Utilizadas
-JAVA / MAVEN / JDK         
+# Linguagens / Bibliotecas Utilizadas         
+<img width="100" height="100" alt="javaicon" src="https://github.com/user-attachments/assets/4a6ebd93-1491-4482-9870-0b739f0eabd0" />
+<img width="100" height="100" alt="maven" src="https://github.com/user-attachments/assets/dfcf925e-e53a-481d-a403-0563138d6872" />
+<img width="100" height="100" alt="maven" src=https://github.com/user-attachments/assets/de3dbc2f-75c6-49aa-8eab-f468d67aa2fa />
 
 # Introdução 
 O projeto foi criado para um estudo acadêmico, onde foi utilizado o java com Jadex como plataforma para o desenvolvimento de sistemas multiagentes em Java. Os multiagentes são vários agentes que atuam em um mesmo sistema, cada um com suas próprias funções. 
@@ -39,8 +41,17 @@ Nesse Projeto foi usado 3 agentes: 1 que é responsavel gerar a matriz, 1 o mult
 - AnalisarHeuristica: Executa a lógica de raciocínio para identificar as próximas jogadas seguras.
 - TempoAgente: informa a cada jogada o quanto que demorou para fazer aquela jogada.
 
-# ⚙️Instruções⚙️
+# Interface
+- Em nosso projeto utilizamos código ASCII para que possamos vizualizar o campo minado em ação.
+- ASCII: É um código de computador que atribui um número a cada letra, número, símbolo e caractere de controle, permitindo a comunicação entre diferentes dispositivos eletrônicos.
+- o "M" representa a marcação de minas.
+- O "?" representa os campos ainda n revelados.
+- O "1,2,3" repsesenta a quantidade de mina ao redor.
+<p align="center">
+<img width="200" height="200" alt="image" src="https://github.com/user-attachments/assets/4a5fa98f-8be7-4988-aa3d-24ff4c69e7ff">
+</p>
 
+# ⚙️Instruções⚙️
 Antes de executar o projeto é necessário seguir e cumprir uma série de requisitos para que tudo funcione da maneira adequada.
 
 1. -> Instalar sua IDE
