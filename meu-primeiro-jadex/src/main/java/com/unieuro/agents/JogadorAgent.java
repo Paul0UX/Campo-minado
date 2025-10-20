@@ -27,6 +27,8 @@ public class JogadorAgent {
     private boolean[][] marcada;
     private int tamanho = 9;
     private Random random = new Random();
+    // delay em milissegundos entre impressões para desacelerar a execução e facilitar leitura
+    private long delayMs = 2000;
     private int totalMines = 0; // total real de minas (este exemplo carrega o campo do arquivo)
 
     // controla quantas bandeiras/flags ainda podem ser usadas
@@ -38,6 +40,11 @@ public class JogadorAgent {
         carregarAdjacencias();
         // inicializa arquivo de minas encontradas (caso UI utilize)
         atualizarArquivoMinas();
+
+        // *** ADICIONADO: imprimir o tabuleiro inicial totalmente oculto
+        // para garantir que o primeiro output após iniciar seja o tabuleiro de interrogações
+        imprimirCampoInicial();
+
         jogar();
     }
 
@@ -127,11 +134,8 @@ public class JogadorAgent {
                 break;
             }
 
-            try {
-                Thread.sleep(1200);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            // Delay controlado por imprimirCampo() para evitar prints rápidos demais
+            // (mantemos o loop rápido quando nada é impresso)
         }
     }
 
@@ -595,7 +599,28 @@ public class JogadorAgent {
             System.out.println();
         }
         System.out.println("========================");
+        // pausa para desacelerar a saída e deixar a evolução visível
+        pause();
     }
+
+    // ----------------- MÉTODO ADICIONADO -----------------
+    /** Imprime o tabuleiro inicial (todas as células como interrogação) com o formato pedido. */
+    private void imprimirCampoInicial() {
+        System.out.println("\n===== CAMPO MINADO =====");
+        System.out.printf("bandeiras restantes = %02d%n", flagsRemaining);
+        for (int i = 0; i < tamanho; i++) {
+            for (int j = 0; j < tamanho; j++) {
+                System.out.print(" ? ");
+            }
+            System.out.println();
+        }
+        System.out.println("========================");
+        System.out.println("[Tempo] Tempo atual: " + lerTempoAtual() + "s");
+        System.out.println("========================");
+        // pausa para o usuário conseguir ver o estado inicial antes de o agente iniciar
+        pause();
+    }
+    // ----------------- FIM DO MÉTODO ADICIONADO -----------------
 
     private void realizarJogadaProbabilistica(int jogada) {
         double[][] prob = calcularProbabilidades();
@@ -680,6 +705,19 @@ public class JogadorAgent {
             Files.writeString(Paths.get("tempo_final.txt"), String.valueOf(lerTempoAtual()));
         } catch (IOException e) {
             System.err.println("[JogadorAgent] Erro ao escrever resultado: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Pausa a execução pelo tempo configurado em milissegundos.
+     * Centralizamos o tratamento de InterruptedException aqui.
+     */
+    private void pause() {
+        if (delayMs <= 0) return;
+        try {
+            Thread.sleep(delayMs);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 }
